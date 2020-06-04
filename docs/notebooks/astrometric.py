@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.2
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -351,14 +351,7 @@ _ = ax[0].set_title("map orbit")
 # %%
 np.random.seed(1234)
 with model:
-    trace = pm.sample(
-        tune=5000,
-        draws=4000,
-        start=map_soln,
-        cores=2,
-        chains=2,
-        step=xo.get_dense_nuts_step(target_accept=0.9, adaptation_window=201),
-    )
+    trace = xo.sample(tune=5000, draws=4000, start=map_soln, cores=2, chains=2)
 
 # %% [markdown]
 # First we can check the convergence for some of the key parameters.
@@ -435,13 +428,8 @@ plx_model, plx_map_soln = get_model(parallax=[24.05, 0.45])
 # %%
 np.random.seed(5432)
 with plx_model:
-    plx_trace = pm.sample(
-        tune=5000,
-        draws=4000,
-        start=plx_map_soln,
-        cores=2,
-        chains=2,
-        step=xo.get_dense_nuts_step(target_accept=0.9, start=plx_map_soln),
+    plx_trace = xo.sample(
+        tune=5000, draws=4000, start=plx_map_soln, cores=2, chains=2
     )
 
 # %% [markdown]
@@ -471,7 +459,7 @@ samples = pm.trace_to_dataframe(plx_trace, varnames=["ecc"])
 samples["$P$ [yr]"] = plx_trace["P"] / yr
 samples["$T_\mathrm{peri} - T_0$ [day]"] = plx_trace["tperi"] - T0
 samples["$a$ [au]"] = plx_trace["a"]
-samples["$M_\mathrm{tot}$ [$M_\odot$]"] = plx_trace["M_tot"]
+samples["$M_\mathrm{tot}$ [$M_S$]"] = plx_trace["M_tot"]
 samples["$e$"] = plx_trace["ecc"]
 del samples["ecc"]
 _ = corner.corner(samples)

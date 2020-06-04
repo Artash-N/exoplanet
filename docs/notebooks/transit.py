@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.2
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -87,14 +87,12 @@ with pm.Model() as model:
     period = pm.Deterministic("period", pm.math.exp(logP))
 
     # The Kipping (2013) parameterization for quadratic limb darkening paramters
-    u = xo.distributions.QuadLimbDark("u", testval=np.array([0.3, 0.2]))
+    u = xo.QuadLimbDark("u", testval=np.array([0.3, 0.2]))
 
     r = pm.Uniform(
         "r", lower=0.01, upper=0.1, shape=2, testval=np.array([0.04, 0.06])
     )
-    b = xo.distributions.ImpactParameter(
-        "b", ror=r, shape=2, testval=np.random.rand(2)
-    )
+    b = xo.ImpactParameter("b", ror=r, shape=2, testval=np.random.rand(2))
 
     # Set up a Keplerian orbit for the planets
     orbit = xo.orbits.KeplerianOrbit(period=period, t0=t0, b=b)
@@ -144,14 +142,7 @@ _ = plt.title("map model")
 # %%
 np.random.seed(42)
 with model:
-    trace = pm.sample(
-        tune=3000,
-        draws=3000,
-        start=map_soln,
-        cores=2,
-        chains=2,
-        step=xo.get_dense_nuts_step(target_accept=0.9),
-    )
+    trace = xo.sample(tune=3000, draws=3000, start=map_soln, cores=2, chains=2)
 
 # %% [markdown]
 # After sampling, it's important that we assess convergence.

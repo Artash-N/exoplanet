@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.2
+#       jupytext_version: 1.4.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -90,10 +90,13 @@ with pm.Model() as model:
     )
 
     # Eccentricity & argument of periasteron
-    ecc = xo.distributions.UnitUniform(
-        "ecc", shape=2, testval=np.array([0.1, 0.1])
-    )
-    omega = xo.distributions.Angle("omega", shape=2)
+    ecs = xo.UnitDisk("ecs", shape=(2, 2), testval=0.01 * np.ones((2, 2)))
+    ecc = pm.Deterministic("ecc", tt.sum(ecs ** 2, axis=0))
+    omega = pm.Deterministic("omega", tt.arctan2(ecs[1], ecs[0]))
+    #     ecc = xo.distributions.UnitUniform(
+    #         "ecc", shape=2, testval=np.array([0.1, 0.1])
+    #     )
+    #     omega = xo.distributions.Angle("omega", shape=2)
 
     # Jitter & a quadratic RV trend
     logs = pm.Normal("logs", mu=np.log(np.median(yerr)), sd=5.0)
@@ -174,14 +177,15 @@ _ = plt.title("MAP model")
 # There are substantial covariances between some of the parameters so we'll use a :func:`exoplanet.get_dense_nuts_step` to tune the sampler (see the :ref:`pymc3-extras` tutorial for more information).
 
 # %%
-np.random.seed(42)
+np.random.seed(24)
 with model:
-    trace = pm.sample(
+    trace = xo.sample(
         tune=4000,
         draws=4000,
         cores=2,
         chains=2,
-        step=xo.get_dense_nuts_step(target_accept=0.95),
+        start=map_soln,
+        target_accept=0.95,
     )
 
 # %% [markdown]
